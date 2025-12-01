@@ -41,10 +41,10 @@ public class AuthController : ControllerBase
         // ASP.NET Identity به طور سنتی از UserName یا Email برای ورود استفاده می کند، 
         // بنابراین از UserName کاربر برای فراخوانی PasswordSignInAsync استفاده می کنیم.
         var result = await _signInManager.PasswordSignInAsync(
-            user.UserName, // از UserName ذخیره شده استفاده می کنیم
-            model.Password,
-            isPersistent: true,
-            lockoutOnFailure: false);
+           user.Email, // <--- از user.Email استفاده کنید
+           model.Password,
+           isPersistent: true,
+           lockoutOnFailure: false);
 
         if (result.Succeeded)
         {

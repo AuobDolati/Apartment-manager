@@ -1,4 +1,4 @@
-using Apartment_manager.Data;
+﻿using Apartment_manager.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,7 +12,7 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddRazorPages();
-
+builder.Services.AddControllers(); // برای فعال کردن API Controllerها
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -35,6 +35,7 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapControllers();
 
 app.MapRazorPages();
 
