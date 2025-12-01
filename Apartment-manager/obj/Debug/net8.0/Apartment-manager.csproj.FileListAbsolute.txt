@@ -47,7 +47,6 @@ D:\project_vs\Project\Apartment-manager\Apartment-manager\bin\Debug\net8.0\Micro
 D:\project_vs\Project\Apartment-manager\Apartment-manager\bin\Debug\net8.0\Microsoft.SqlServer.Server.dll
 D:\project_vs\Project\Apartment-manager\Apartment-manager\bin\Debug\net8.0\Microsoft.Win32.SystemEvents.dll
 D:\project_vs\Project\Apartment-manager\Apartment-manager\bin\Debug\net8.0\Mono.TextTemplating.dll
-D:\project_vs\Project\Apartment-manager\Apartment-manager\bin\Debug\net8.0\System.ClientModel.dll
 D:\project_vs\Project\Apartment-manager\Apartment-manager\bin\Debug\net8.0\System.CodeDom.dll
 D:\project_vs\Project\Apartment-manager\Apartment-manager\bin\Debug\net8.0\System.Composition.AttributedModel.dll
 D:\project_vs\Project\Apartment-manager\Apartment-manager\bin\Debug\net8.0\System.Composition.Convention.dll
@@ -135,6 +134,7 @@ D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\Apart
 D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\Apartment-manager.MvcApplicationPartsAssemblyInfo.cache
 D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\Apartment-manager.RazorAssemblyInfo.cache
 D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\Apartment-manager.RazorAssemblyInfo.cs
+D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\Apartment-manager.sourcelink.json
 D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\scopedcss\Pages\Shared\_Layout.cshtml.rz.scp.css
 D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\scopedcss\bundle\Apartment-manager.styles.css
 D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\scopedcss\projectbundle\Apartment-manager.bundle.scp.css
@@ -149,4 +149,3 @@ D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\refin
 D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\Apartment-manager.pdb
 D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\Apartment-manager.genruntimeconfig.cache
 D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\ref\Apartment-manager.dll
-D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\Apartment-manager.sourcelink.json

@@ -30,7 +30,8 @@
             color: #333;
         }
 
-        input[type="email"], input[type="password"] {
+        /* اصلاح برای استفاده از type=text برای شماره موبایل */
+        input[type="text"], input[type="password"], input[type="email"] {
             width: 100%;
             padding: 12px;
             margin: 10px 0;
@@ -76,60 +77,143 @@
 <body>
 
     <div class="login-container">
-        <h2>ورود به سیستم</h2>
+        <h2>ورود با شماره موبایل</h2>
         <div id="message" class="message" style="display:none;"></div>
+
         <form id="loginForm">
-            <input type="email" id="email" placeholder="ایمیل کاربری" required>
+            <input type="text" id="phoneNumber" placeholder="شماره موبایل" required>
             <input type="password" id="password" placeholder="رمز عبور" required>
             <button type="submit">ورود</button>
         </form>
     </div>
 
+    <div class="login-container" id="registrationSection" style="display:none;">
+        <h2>تکمیل ثبت نام</h2>
+        <div id="regMessage" class="message" style="display:none;"></div>
+        <form id="regForm">
+            <input type="text" id="regPhoneNumber" placeholder="شماره موبایل" readonly> <input type="text" id="fullName" placeholder="نام و نام خانوادگی" required>
+            <input type="email" id="regEmail" placeholder="ایمیل" required> <input type="password" id="regPassword" placeholder="رمز عبور" required>
+            <input type="password" id="confirmPassword" placeholder="تکرار رمز عبور" required>
+            <button type="submit">ثبت نام نهایی</button>
+        </form>
+        <button type="button" onclick="showLoginForm()" style="background-color: #ccc; color: #333;">بازگشت به ورود</button>
+    </div>
+
     <script>
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+        // تعریف ثابت‌ها
+        const loginForm = document.getElementById('loginForm');
         const msgDiv = document.getElementById('message');
-        msgDiv.style.display = 'none';
+        const registrationDiv = document.getElementById('registrationSection');
+        const regForm = document.getElementById('regForm');
+        const regMsgDiv = document.getElementById('regMessage');
 
-        try {
-            // URL API که در گام ۱۵ ساختیم
-            const response = await fetch('/api/Auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ Email: email, Password: password })
-            });
+        // تابع برای نمایش مجدد فرم ورود
+        function showLoginForm() {
+            registrationDiv.style.display = 'none';
+            loginForm.parentElement.style.display = 'block'; // نمایش container فرم ورود
+            msgDiv.style.display = 'none';
+        }
 
-            const data = await response.json();
+        // ------------------------------------------
+        // ۱. منطق ورود (ارسال به /api/Auth/login)
+        // ------------------------------------------
+        loginForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
 
-            if (response.ok) {
-                // اگر ورود موفق بود: پیام موفقیت و انتقال به صفحه اصلی
-                msgDiv.className = 'message success';
-                msgDiv.textContent = data.message;
-                msgDiv.style.display = 'block';
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const password = document.getElementById('password').value;
+            msgDiv.style.display = 'none';
 
-                // تغییر مسیر به صفحه اصلی پس از چند ثانیه (مثلاً Home.html)
-                // توجه: شما باید صفحه Home.html را بسازید
-                setTimeout(() => {
-                    window.location.href = '/Home.html';
-                }, 1500);
+            try {
+                const response = await fetch('/api/Auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ PhoneNumber: phoneNumber, Password: password })
+                });
 
-            } else {
-                // اگر ورود ناموفق بود: نمایش خطا
+                const data = await response.json();
+
+                if (response.ok) {
+                    // ورود موفقیت آمیز
+                    msgDiv.className = 'message success';
+                    msgDiv.textContent = data.message;
+                    msgDiv.style.display = 'block';
+                    setTimeout(() => { window.location.href = '/Home.html'; }, 1500);
+
+                } else if (response.status === 404 && data.needsRegistration === true) {
+                    // شماره موبایل در دیتابیس نیست -> نمایش فرم ثبت نام
+                    msgDiv.className = 'message error';
+                    msgDiv.textContent = "شماره شما ثبت نشده است. لطفا ثبت نام کنید.";
+                    msgDiv.style.display = 'block';
+
+                    // نمایش فرم ثبت نام کامل
+                    loginForm.parentElement.style.display = 'none'; // مخفی کردن container فرم ورود
+                    registrationDiv.style.display = 'block';
+                    document.getElementById('regPhoneNumber').value = phoneNumber; // شماره موبایل را پر کنید
+
+                } else {
+                    // خطاهای دیگر (مثل رمز عبور اشتباه)
+                    msgDiv.className = 'message error';
+                    msgDiv.textContent = data.message || 'خطا در ورود';
+                    msgDiv.style.display = 'block';
+                }
+            } catch (error) {
                 msgDiv.className = 'message error';
-                msgDiv.textContent = data.message || 'خطا در ورود';
+                msgDiv.textContent = 'خطای اتصال به سرور.';
                 msgDiv.style.display = 'block';
             }
-        } catch (error) {
-            msgDiv.className = 'message error';
-            msgDiv.textContent = 'خطای اتصال به سرور.';
-            msgDiv.style.display = 'block';
-        }
-    });
+        });
+
+        // ------------------------------------------
+        // ۲. منطق ثبت نام (ارسال به /api/Auth/register)
+        // ------------------------------------------
+        regForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const model = {
+                PhoneNumber: document.getElementById('regPhoneNumber').value,
+                FullName: document.getElementById('fullName').value,
+                Email: document.getElementById('regEmail').value,
+                Password: document.getElementById('regPassword').value,
+                ConfirmPassword: document.getElementById('confirmPassword').value
+            };
+            regMsgDiv.style.display = 'none';
+
+            if (model.Password !== model.ConfirmPassword) {
+                regMsgDiv.className = 'message error';
+                regMsgDiv.textContent = 'رمز عبورها یکسان نیستند.';
+                regMsgDiv.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/Auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(model)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // ثبت نام موفقیت آمیز
+                    regMsgDiv.className = 'message success';
+                    regMsgDiv.textContent = data.message;
+                    regMsgDiv.style.display = 'block';
+                    // انتقال به صفحه اصلی
+                    setTimeout(() => { window.location.href = '/Home.html'; }, 1500);
+                } else {
+                    // خطای ثبت نام (مثلا ایمیل تکراری)
+                    regMsgDiv.className = 'message error';
+                    regMsgDiv.textContent = data.message || 'خطا در ثبت نام';
+                    regMsgDiv.style.display = 'block';
+                }
+            } catch (error) {
+                regMsgDiv.className = 'message error';
+                regMsgDiv.textContent = 'خطای اتصال به سرور در زمان ثبت نام.';
+                regMsgDiv.style.display = 'block';
+            }
+        });
     </script>
 
 </body>
