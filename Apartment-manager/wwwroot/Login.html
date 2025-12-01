@@ -1,0 +1,136 @@
+﻿<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ورود به مدیریت ساختمان</title>
+    <style>
+        /* CSS ساده برای شبیه سازی محیط موبایل */
+        body {
+            font-family: Tahoma, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .login-container {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 350px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            padding: 14px 20px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+            button:hover {
+                background-color: #45a049;
+            }
+
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .error {
+            background-color: #fdd;
+            color: #d00;
+        }
+
+        .success {
+            background-color: #dfd;
+            color: #0d0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h2>ورود به سیستم</h2>
+        <div id="message" class="message" style="display:none;"></div>
+        <form id="loginForm">
+            <input type="email" id="email" placeholder="ایمیل کاربری" required>
+            <input type="password" id="password" placeholder="رمز عبور" required>
+            <button type="submit">ورود</button>
+        </form>
+    </div>
+
+    <script>
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const msgDiv = document.getElementById('message');
+        msgDiv.style.display = 'none';
+
+        try {
+            // URL API که در گام ۱۵ ساختیم
+            const response = await fetch('/api/Auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ Email: email, Password: password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // اگر ورود موفق بود: پیام موفقیت و انتقال به صفحه اصلی
+                msgDiv.className = 'message success';
+                msgDiv.textContent = data.message;
+                msgDiv.style.display = 'block';
+
+                // تغییر مسیر به صفحه اصلی پس از چند ثانیه (مثلاً Home.html)
+                // توجه: شما باید صفحه Home.html را بسازید
+                setTimeout(() => {
+                    window.location.href = '/Home.html';
+                }, 1500);
+
+            } else {
+                // اگر ورود ناموفق بود: نمایش خطا
+                msgDiv.className = 'message error';
+                msgDiv.textContent = data.message || 'خطا در ورود';
+                msgDiv.style.display = 'block';
+            }
+        } catch (error) {
+            msgDiv.className = 'message error';
+            msgDiv.textContent = 'خطای اتصال به سرور.';
+            msgDiv.style.display = 'block';
+        }
+    });
+    </script>
+
+</body>
+</html>

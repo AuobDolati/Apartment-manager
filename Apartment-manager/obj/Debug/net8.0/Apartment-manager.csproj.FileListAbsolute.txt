@@ -149,3 +149,4 @@ D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\refin
 D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\Apartment-manager.pdb
 D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\Apartment-manager.genruntimeconfig.cache
 D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\ref\Apartment-manager.dll
+D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\Apartment-manager.sourcelink.json
