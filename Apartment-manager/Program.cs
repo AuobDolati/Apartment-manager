@@ -1,28 +1,31 @@
-﻿using ApartmentManager.Data; // استفاده از یک using صحیح (ApartmentManager.Data)
+﻿// File: Program.cs
+
+using Apartment_manager.Data;
+using ApartmentManager.Data;
 using ApartmentManager.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-
-// === ۱. ثبت DbContext و Identity (ترکیب شده در یک بلاک) ===
-
-// ثبت DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-  options.UseSqlServer(connectionString));
-
-// ثبت Identity (فقط یک بار)
-builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
-  .AddEntityFrameworkStores<ApplicationDbContext>();
-
+    options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-// === ۲. سرویس‌های کنترلر و صفحات ===
+// === اصلاح مهم: غیرفعال کردن اعتبارسنجی Email توسط Identity ===
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    // این خط، اجباری بودن Email را غیرفعال می‌کند
+    options.User.RequireUniqueEmail = false;
+    options.SignIn.RequireConfirmedEmail = false;
+    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+"; // مجاز بودن کاراکترهای معمول
+})
+.AddEntityFrameworkStores<ApplicationDbContext>();
+
 builder.Services.AddControllers();
+builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
@@ -34,7 +37,7 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler("/Error");
+    app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 
@@ -43,23 +46,18 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// === ۳. فعال‌سازی هویت و مجوز ===
-app.UseAuthentication();
 app.UseAuthorization();
 
-// === ۴. نگاشت کنترلرها و صفحات ===
-app.MapControllers();
-app.MapRazorPages();
-
-// === ۵. تنظیم صفحه پیش‌فرض ===
-app.Use(async (context, next) =>
+// نمایش صفحه Login.html به عنوان صفحه پیش فرض
+app.MapGet("/", context =>
 {
-    if (context.Request.Path == "/" || context.Request.Path == "/index.html")
-    {
-        context.Request.Path = "/Login.html";
-    }
-    await next();
+    context.Response.Redirect("/Login.html");
+    return Task.CompletedTask;
 });
 
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapRazorPages();
 
 app.Run();
