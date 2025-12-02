@@ -1,0 +1,211 @@
+﻿<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>پنل مدیریت آپارتمان</title>
+
+    <style>
+        body {
+            font-family: 'B Nazanin', Tahoma, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px 15px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+            .header h1 {
+                margin: 0;
+                font-size: 24px;
+            }
+
+        .container {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        /* دکمه‌های اصلی عملیات */
+        .operation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .operation-button {
+            background-color: #f0f0f0;
+            color: #333;
+            border: none;
+            padding: 25px 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+            .operation-button:hover {
+                background-color: #e0e0e0;
+                transform: translateY(-2px);
+            }
+
+            .operation-button i {
+                font-size: 24px;
+                margin-bottom: 10px;
+                display: block;
+                color: #4CAF50;
+            }
+
+        .status-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 8px;
+            font-size: 18px;
+        }
+
+            .status-box.fund {
+                background-color: #e6ffe6;
+                color: #4CAF50;
+                border: 1px solid #00cc00;
+            }
+
+        .logout-button {
+            background: none;
+            color: white;
+            border: 1px solid white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            position: absolute;
+            left: 15px;
+            top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>مدیریت مجتمع آپارتمانی</h1>
+        <button class="logout-button" onclick="logout()">خروج</button>
+    </div>
+
+    <div class="container">
+
+        <div class="card">
+            <h2>وضعیت مالی کلی</h2>
+
+            <div class="status-box fund">
+                <span>موجودی صندوق:</span>
+                <span id="fundBalance">در حال بارگذاری...</span>
+            </div>
+
+        </div>
+
+        <div class="card">
+            <h2>عملیات مدیریت</h2>
+
+            <div class="operation-grid">
+
+                <button class="operation-button" onclick="goToPage('receive')">
+                    <i class="fas fa-hand-holding-usd">💰</i>
+                    دریافت شارژ
+                </button>
+
+                <button class="operation-button" onclick="goToPage('expense')">
+                    <i class="fas fa-money-bill-wave">💸</i>
+                    ثبت هزینه انجام شده
+                </button>
+
+                <button class="operation-button" onclick="goToPage('residents')">
+                    <i class="fas fa-users">👥</i>
+                    لیست ساکنین
+                </button>
+
+                <button class="operation-button" onclick="goToPage('reports')">
+                    <i class="fas fa-chart-line">📊</i>
+                    گزارشات مالی
+                </button>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // مقدار اولیه (مثال)
+        let fundBalance = 1500000; // 1,500,000 تومان
+
+        // ------------------------------------------
+        // توابع اصلی
+        // ------------------------------------------
+
+        // تابع برای نمایش موجودی صندوق به صورت فرمت شده
+        function formatCurrency(amount) {
+            return amount.toLocaleString('fa-IR', { style: 'currency', currency: 'IRR', minimumFractionDigits: 0 }).replace('ریال', 'تومان');
+        }
+
+        // بارگذاری داده‌ها (API call شبیه‌سازی شده)
+        async function loadData() {
+            // ⚠️ در محیط واقعی، اینجا باید با API سمت سرور (مثل /api/finance/balance) تماس بگیرید.
+
+            // نمایش موجودی صندوق
+            document.getElementById('fundBalance').textContent = formatCurrency(fundBalance);
+
+            // در اینجا می‌توانید داده‌های دیگری مانند نام کاربر لاگین شده را نیز بارگذاری کنید.
+        }
+
+        // تابع هدایت به صفحات عملیاتی دیگر
+        function goToPage(pageName) {
+            // در فاز بعدی، ما این صفحات (مثلا receive.html) را ایجاد خواهیم کرد.
+            alert(`در حال رفتن به صفحه: ${pageName}`);
+            // window.location.href = `/${pageName}.html`;
+        }
+
+        // خروج از سیستم (پاک کردن توکن JWT و بازگشت به صفحه لاگین)
+        function logout() {
+            // 1. پاک کردن توکن JWT (از LocalStorage یا sessionStorage)
+            localStorage.removeItem('jwtToken');
+
+            // 2. هدایت به صفحه لاگین
+            window.location.href = '/Login.html';
+        }
+
+        // اجرای تابع بارگذاری داده‌ها پس از لود شدن صفحه
+        window.onload = loadData;
+
+        // ------------------------------------------
+        // بررسی وضعیت احراز هویت (مهم برای Web View)
+        // ------------------------------------------
+        // این بخش اطمینان می‌دهد که کاربر فقط با داشتن توکن وارد Home شود.
+        const token = localStorage.getItem('jwtToken');
+        if (!token) {
+            window.location.href = '/Login.html';
+        }
+
+    </script>
+
+</body>
+</html>
