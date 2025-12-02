@@ -1,125 +1,144 @@
-﻿// File: Controllers/AuthController.cs
-
-using ApartmentManager.Models;
+﻿// Controllers/AuthController.cs
+using ApartmentManager.Models; // مطمئن شوید مسیر مدل‌ها درست است
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Threading.Tasks;
-using Apartment_manager.Data;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
-namespace ApartmentManager.Controllers
+namespace Apartment_manager.Controllers
 {
-    [ApiController]
     [Route("api/[controller]")]
+    [ApiController]
     public class AuthController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly IConfiguration _configuration; // ⬅️ اضافه شدن تزریق
 
-        public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+        public AuthController(
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
+            IConfiguration configuration) // ⬅️ اضافه شدن به سازنده
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _configuration = configuration;
         }
 
+        // --- متد کمکی: تولید توکن JWT ---
+        private string GenerateJwtToken(ApplicationUser user)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Name, user.UserName ?? user.Id),
+                new Claim("fullname", user.FullName ?? "User") // استفاده از FullName
+            };
+
+            var keyString = _configuration["Jwt:Key"] ?? "YOUR_LONG_AND_SECURE_SECRET_KEY_MIN_16_CHARS";
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddDays(7), // انقضای توکن
+                signingCredentials: credentials);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        // --- ۱. متد Login (بررسی ثبت نام / ورود نهایی) ---
+        [HttpPost("login")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Login([FromBody] LoginRequest model)
+        {
+            // ۱. بررسی اعتبارسنجی مدل
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new { message = "شماره موبایل و رمز عبور الزامی است." });
+            }
+
+            var user = await _userManager.FindByNameAsync(model.PhoneNumber);
+
+            // ۲. اگر کاربر یافت نشد (404 - باید ثبت نام کند)
+            if (user == null)
+            {
+                // این پاسخ 404 برای هدایت کاربر به فرم ثبت نام استفاده می‌شود
+                return NotFound(new { message = "شماره موبایل یافت نشد. لطفا ثبت نام کنید." });
+            }
+
+            // ۳. اگر رمز عبور خالی باشد (از فلو کلاینت می‌آید - مرحله ۱)
+            if (string.IsNullOrEmpty(model.Password))
+            {
+                // 400 Bad Request: یعنی کاربر وجود دارد اما رمز عبور را وارد نکرده.
+                return BadRequest(new { message = "رمز عبور برای این شماره لازم است. لطفا وارد کنید." });
+            }
+
+            // ۴. ورود نهایی (مرحله ۲)
+            var result = await _signInManager.PasswordSignInAsync(model.PhoneNumber, model.Password, isPersistent: false, lockoutOnFailure: false);
+
+            if (result.Succeeded)
+            {
+                string token = GenerateJwtToken(user); // ⬅️ تولید توکن برای ورود موفق
+
+                return Ok(new
+                {
+                    message = "ورود موفقیت آمیز.",
+                    token = token, // ⬅️ ارسال توکن
+                    redirectUrl = "/Home.html"
+                });
+            }
+
+            return Unauthorized(new { message = "رمز عبور اشتباه است." });
+        }
+
+
+        // --- ۲. متد Register (ثبت نام نهایی) ---
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegisterRequest model)
         {
             if (!ModelState.IsValid)
             {
-                var error = ModelState.Values.SelectMany(v => v.Errors).FirstOrDefault();
-                return BadRequest(new { message = error?.ErrorMessage ?? "اطلاعات وارد شده نامعتبر است." });
-            }
-
-            var existingUser = await _userManager.Users.SingleOrDefaultAsync(u => u.PhoneNumber == model.PhoneNumber);
-            if (existingUser != null)
-            {
-                return BadRequest(new { message = "شماره موبایل قبلاً ثبت شده است." });
+                return BadRequest(new { message = "اطلاعات ارسالی صحیح نمی‌باشد.", errors = ModelState });
             }
 
             var user = new ApplicationUser
             {
-                // UserName باید تنظیم شود، آن را برابر با شماره موبایل قرار می‌دهیم
                 UserName = model.PhoneNumber,
-
                 PhoneNumber = model.PhoneNumber,
-                PhoneNumberConfirmed = true,
-
-                // Email را نادیده می‌گیریم
-                Email = null,
-                EmailConfirmed = false,
-
-                FullName = model.FullName
+                FullName = model.FullName,
+                EmailConfirmed = true,
+                PhoneNumberConfirmed = true
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (result.Succeeded)
             {
-                await _signInManager.SignInAsync(user, isPersistent: true);
-                return Ok(new { message = "ثبت نام و ورود موفقیت آمیز." });
-            }
+                // تولید توکن پس از ثبت نام موفق
+                string token = GenerateJwtToken(user);
 
-            return BadRequest(new { message = result.Errors.First().Description });
-        }
-
-
-        // File: Controllers/AuthController.cs - متد Login
-
-        // File: Controllers/AuthController.cs - متد Login (اصلاح نهایی)
-
-        [HttpPost("login")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Login([FromBody] LoginRequest model)
-        {
-            if (!ModelState.IsValid)
-            {
-                var error = ModelState.Values.SelectMany(v => v.Errors).FirstOrDefault();
-                return BadRequest(new { message = error?.ErrorMessage ?? "اطلاعات وارد شده نامعتبر است." });
-            }
-
-            // === خط اصلاح‌شده: جایگزینی با FirstOrDefaultAsync ===
-            // این روش امن‌تر است و مشکل ترجمه کوئری را حل می‌کند
-            var user = await _userManager.Users
-                                         .FirstOrDefaultAsync(u => u.PhoneNumber == model.PhoneNumber);
-            // === پایان خط اصلاح شده ===
-
-
-            if (user == null)
-            {
-                // ... (بقیه منطق 404)
-                return NotFound(new
+                return Ok(new
                 {
-                    message = "کاربر با این شماره موبایل یافت نشد. لطفا ثبت نام کنید.",
-                    needsRegistration = true
+                    message = "ثبت نام با موفقیت انجام شد. در حال ورود...",
+                    token = token, // ⬅️ ارسال توکن
+                    redirectUrl = "/Home.html"
                 });
             }
 
-            // ۳. اگر رمز عبور ارسال نشده باشد
-            if (string.IsNullOrEmpty(model.Password))
+            var errorMessages = result.Errors.Select(e => e.Description);
+            return BadRequest(new
             {
-                // ... (بقیه منطق 400)
-                return BadRequest(new { message = "لطفاً رمز عبور را وارد کنید." });
-            }
-
-            // ۴. تلاش برای ورود با رمز عبور کامل
-            var userName = user.UserName;
-
-            var result = await _signInManager.PasswordSignInAsync(
-                userName,
-                model.Password,
-                isPersistent: true,
-                lockoutOnFailure: false);
-
-            if (result.Succeeded)
-            {
-                return Ok(new { message = "ورود موفقیت آمیز.", redirectUrl = "/Home.html" });
-            }
-
-            return Unauthorized(new { message = "رمز عبور یا اطلاعات وارد شده صحیح نیست." });
+                message = "خطا در ثبت نام.",
+                errors = errorMessages
+            });
         }
     }
 }

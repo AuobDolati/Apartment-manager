@@ -186,7 +186,7 @@
 
         // خروج از سیستم (پاک کردن توکن JWT و بازگشت به صفحه لاگین)
         function logout() {
-            // 1. پاک کردن توکن JWT (از localStorage یا sessionStorage)
+            // 1. پاک کردن توکن JWT (از LocalStorage یا sessionStorage)
             localStorage.removeItem('jwtToken');
 
             // 2. هدایت به صفحه لاگین
@@ -202,7 +202,6 @@
         // این بخش اطمینان می‌دهد که کاربر فقط با داشتن توکن وارد Home شود.
         const token = localStorage.getItem('jwtToken');
         if (!token) {
-            // اگر توکن نباشد، کاربر را به صفحه لاگین برمی‌گرداند.
             window.location.href = '/Login.html';
         }
 

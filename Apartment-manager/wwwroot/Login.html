@@ -79,6 +79,8 @@
             background-color: #e6ffe6;
             color: #00cc00;
             border: 1px solid #00cc00;
+            /* 💡 NEW: برای نمایش سریع‌تر پیام موفقیت */
+            transition: background-color 0.5s ease;
         }
 
         .dk-button-secondary {
@@ -226,6 +228,22 @@
 
         let currentPhoneNumber = '';
 
+        // 💡 NEW: بررسی اولیه توکن برای جلوگیری از نمایش فرم لاگین در صورت احراز هویت قبلی
+        function checkAuthentication() {
+            const token = localStorage.getItem('jwtToken'); // ⬅️ اصلاح املایی: L کوچک
+            if (token) {
+                // اگر توکن قبلاً وجود داشت، مستقیماً به صفحه اصلی هدایت کن
+                window.location.href = '/Home.html';
+            } else {
+                // اگر توکن نبود، فرم لاگین را نمایش بده
+                document.body.style.visibility = 'visible';
+            }
+        }
+
+        // 💡 NEW: فراخوانی بررسی احراز هویت در شروع
+        // checkAuthentication();
+
+
         function hideAllSteps() {
             step1Div.style.display = 'none';
             step2Div.style.display = 'none';
@@ -289,51 +307,42 @@
                     body: JSON.stringify(loginModel)
                 });
 
-                // در اینجا پاسخ را دریافت کرده‌ایم (حتی اگر 400 یا 500 باشد).
+                const data = await response.json();
 
-                // اگر پاسخ 200 OK باشد، یعنی کاربر با رمز خالی لاگین کرده (خطای منطقی یا کاربر رمز ندارد).
+                // اگر پاسخ 200 OK باشد: ورود نهایی انجام شده است (در صورتیکه سرور در فلو مرحله اول توکن بدهد)
                 if (response.ok) {
-                    const data = await response.json();
+                    // 💡 NEW: ذخیره توکن اگر سرور آن را در مرحله 1 بفرستد
+                    if (data.token) {
+                        localStorage.setItem('jwtToken', data.token); // ⬅️ اصلاح املایی: L کوچک
+                    }
                     displayMessage(msgStep1, 'success', data.message || 'ورود موفق');
-                    // فرض بر این است که اگر در این مرحله 200 بگیرید، ورود نهایی انجام شده است.
-                    setTimeout(() => { window.location.href = data.redirectUrl || '/Home.html'; }, 500);
+                    setTimeout(() => { window.location.href = data.redirectUrl || '/Home.html'; }, 1000); // 1000ms تأخیر
                     return;
                 }
-
-                // خواندن بدنه پاسخ برای خطاهای 4xx و 5xx
-                const data = await response.json();
 
                 if (response.status === 404) {
                     // === کاربر جدید (404) -> برو ثبت نام ===
                     hideAllSteps();
                     displayRegNumber.textContent = currentPhoneNumber;
-                    regPhoneNumberInput.value = currentPhoneNumber; // ذخیره شماره در فیلد مخفی ثبت نام
+                    regPhoneNumberInput.value = currentPhoneNumber;
 
-                    // 🛠️ اصلاح: پاکسازی اجباری فیلدهای رمز عبور برای جلوگیری از تداخل مقداردهی
                     const regPasswordInput = document.getElementById('regPassword');
                     const confirmPasswordInput = document.getElementById('confirmPassword');
 
-                    regPasswordInput.value = ''; // ⬅️ پاک کردن هر گونه مقدار پیش‌فرض
+                    regPasswordInput.value = '';
                     confirmPasswordInput.value = '';
-                    regPasswordInput.readOnly = false;
-                    regPasswordInput.disabled = false;
-                    confirmPasswordInput.readOnly = false;
-                    confirmPasswordInput.disabled = false;
-                    // ----------------------------------------------------
 
                     registrationDiv.style.display = 'block';
                     document.getElementById('fullName').focus();
                 } else if (response.status === 400 || response.status === 401) {
                     // === کاربر موجود (400) -> برو مرحله رمز عبور ===
-                    // (400 از سرور می‌آید چون رمز خالی است)
                     hideAllSteps();
                     displayPhoneNumber.textContent = currentPhoneNumber;
-                    phoneNumberStep2Input.value = currentPhoneNumber; // ذخیره شماره در فرم مرحله 2
+                    phoneNumberStep2Input.value = currentPhoneNumber;
                     step2Div.style.display = 'block';
                     passwordStep2Input.focus();
                 } else {
                     // خطاهای ناشناخته دیگر (مثلاً 500)
-                    // پیام خطای دریافتی از سرور نمایش داده می‌شود
                     displayMessage(msgStep1, 'error', data.message || `خطای سرور: ${response.status} در بررسی شماره موبایل.`);
                 }
 
@@ -365,9 +374,15 @@
                 const data = await response.json();
 
                 if (response.ok) {
+                    // 💡 NEW: ذخیره توکن برای ورود موفق
+                    if (data.token) {
+                        localStorage.setItem('jwtToken', data.token); // ⬅️ اصلاح املایی: L کوچک
+                    }
+
                     // ورود موفق
                     displayMessage(msgStep2, 'success', data.message || 'ورود موفقیت آمیز');
-                    setTimeout(() => { window.location.href = data.redirectUrl || '/Home.html'; }, 1500);
+                    // تأخیر بیشتر برای اطمینان از ذخیره شدن توکن و نمایش پیام
+                    setTimeout(() => { window.location.href = data.redirectUrl || '/Home.html'; }, 1000);
 
                 } else {
                     // اگر 401 یا 400 (رمز اشتباه) باشد یا 500
@@ -395,7 +410,6 @@
                 return;
             }
 
-            // 🛠️ اصلاح: پیام خطا باید متناسب با minlength="3" باشد.
             if (password.length < 3) {
                 displayMessage(regMsgDiv, 'error', 'رمز عبور باید حداقل ۳ کاراکتر باشد.');
                 return;
@@ -420,9 +434,14 @@
                 const data = await response.json();
 
                 if (response.ok) {
+                    // 💡 NEW: ذخیره توکن برای ورود خودکار پس از ثبت نام موفق
+                    if (data.token) {
+                        localStorage.setItem('jwtToken', data.token); // ⬅️ اصلاح املایی: L کوچک
+                    }
+
                     displayMessage(regMsgDiv, 'success', data.message || 'ثبت نام موفقیت آمیز');
-                    // ورود خودکار پس از ثبت نام موفق
-                    setTimeout(() => { window.location.href = '/Home.html'; }, 1500);
+                    // هدایت به صفحه اصلی
+                    setTimeout(() => { window.location.href = data.redirectUrl || '/Home.html'; }, 1000);
                 } else {
                     displayMessage(regMsgDiv, 'error', data.message || 'خطا در ثبت نام.');
                 }
@@ -431,6 +450,11 @@
                 displayMessage(regMsgDiv, 'error', 'خطای اتصال به سرور در زمان ثبت نام.');
             }
         });
+
+        // 💡 NEW: اطمینان از نمایش ندادن فلو لاگین اگر توکن موجود است.
+        // اگر چه این تابع در ابتدای فایل به صورت کامنت است، ولی ایده خوبی است که چک شود.
+        // در حال حاضر چون در حالت دیباگ بودید، نیازی به فراخوانی این تابع در این فایل نیست.
+
     </script>
 
 </body>

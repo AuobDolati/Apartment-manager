@@ -149,3 +149,8 @@ D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\refin
 D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\Apartment-manager.pdb
 D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\Apartment-manager.genruntimeconfig.cache
 D:\project_vs\Project\Apartment-manager\Apartment-manager\obj\Debug\net8.0\ref\Apartment-manager.dll
+D:\project_vs\Project\Apartment-manager\Apartment-manager\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+D:\project_vs\Project\Apartment-manager\Apartment-manager\bin\Debug\net8.0\Microsoft.OpenApi.dll
+D:\project_vs\Project\Apartment-manager\Apartment-manager\bin\Debug\net8.0\Swashbuckle.AspNetCore.Swagger.dll
+D:\project_vs\Project\Apartment-manager\Apartment-manager\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+D:\project_vs\Project\Apartment-manager\Apartment-manager\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerUI.dll
