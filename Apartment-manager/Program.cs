@@ -1,27 +1,27 @@
-﻿using Apartment_manager.Data;
-using ApartmentManager.Data;
-using ApartmentManager.Models; // مطمئن شوید که این using وجود دارد
+﻿using ApartmentManager.Data; // استفاده از یک using صحیح (ApartmentManager.Data)
+using ApartmentManager.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Apartment_manager.Data;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-// ۱. ثبت DbContext
+// === ۱. ثبت DbContext و Identity (ترکیب شده در یک بلاک) ===
+
+// ثبت DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+  options.UseSqlServer(connectionString));
+
+// ثبت Identity (فقط یک بار)
+builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
+  .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-// ۲. ثبت Identity: استفاده از ApplicationUser به جای IdentityUser
-// شما مدل کاربری سفارشی خودتان (ApplicationUser) را به Identity معرفی می‌کنید.
-builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
-    .AddEntityFrameworkStores<ApplicationDbContext>();
-
-// ۳. سرویس‌های کنترلر و صفحات
+// === ۲. سرویس‌های کنترلر و صفحات ===
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();
 
@@ -43,15 +43,15 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// ۴. فعال‌سازی هویت و مجوز
+// === ۳. فعال‌سازی هویت و مجوز ===
 app.UseAuthentication();
 app.UseAuthorization();
 
-// ۵. نگاشت کنترلرها و صفحات
+// === ۴. نگاشت کنترلرها و صفحات ===
 app.MapControllers();
 app.MapRazorPages();
 
-// ۶. تنظیم صفحه پیش‌فرض (هدایت از مسیر ریشه به Login.html)
+// === ۵. تنظیم صفحه پیش‌فرض ===
 app.Use(async (context, next) =>
 {
     if (context.Request.Path == "/" || context.Request.Path == "/index.html")

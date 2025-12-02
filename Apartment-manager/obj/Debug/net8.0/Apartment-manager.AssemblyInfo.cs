@@ -16,7 +16,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Apartment-manager")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cc56681ae8b19a7005b9099f3a0e78ad1d802706")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b87b7795c830323146548f8d1d3d81ad39fc9d31")]
 [assembly: System.Reflection.AssemblyProductAttribute("Apartment-manager")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Apartment-manager")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

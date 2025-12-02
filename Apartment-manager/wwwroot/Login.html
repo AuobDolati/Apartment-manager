@@ -8,7 +8,7 @@
 
     <style>
         body {
-            font-family: Tahoma, sans-serif;
+            font-family: 'B Nazanin', Tahoma, sans-serif; /* فونت بهبود یافته */
             background-color: #f4f7f6;
             display: flex;
             justify-content: center;
@@ -33,18 +33,19 @@
             color: #333;
         }
 
-        input[type="text"], input[type="password"], input[type="email"] {
+        input[type="text"], input[type="password"] {
             width: 100%;
             padding: 12px;
             margin: 10px 0;
             border: 1px solid #ccc;
             border-radius: 5px;
             box-sizing: border-box;
+            /* برای ورودی‌های فارسی، جهت به سمت راست است */
             direction: ltr;
             text-align: right;
         }
 
-        button {
+        button, .dk-button-primary {
             width: 100%;
             background-color: #4CAF50;
             color: white;
@@ -54,9 +55,10 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
+            transition: background-color 0.3s;
         }
 
-            button:hover {
+            button:hover, .dk-button-primary:hover {
                 background-color: #45a049;
             }
 
@@ -65,6 +67,7 @@
             margin-top: 15px;
             border-radius: 5px;
             text-align: center;
+            display: none;
         }
 
         .error {
@@ -85,6 +88,10 @@
             border: 1px solid #ccc;
             margin-top: 10px;
         }
+
+            .dk-button-secondary:hover {
+                background-color: #e0e0e0;
+            }
 
         .dk-form-group {
             position: relative;
@@ -121,17 +128,11 @@
 
 <body style="visibility: visible;">
 
-    <header class="dk-form-header">
-        <div class="dk-form-card" style="box-shadow: none; max-width: 150px; padding: 0;">
-            <img width="110" src="https://www.digikala.com/brand/full-horizontal.svg" alt="Apartment Manager Logo" class="dk-logo" />
-        </div>
-    </header>
-
     <div id="step1_phoneNumber" class="dk-form-card">
         <h2>ورود یا ثبت‌نام</h2>
         <p style="text-align: center;">لطفا شماره موبایل خود را وارد کنید.</p>
 
-        <div id="msg_step1" class="message" style="display:none;"></div>
+        <div id="msg_step1" class="message"></div>
 
         <form id="form_step1">
             <div class="dk-form-group">
@@ -149,7 +150,7 @@
         <h2>ورود به سیستم</h2>
         <p style="text-align: center;">شماره <span id="display_phoneNumber"></span> ثبت شده است.</p>
 
-        <div id="msg_step2" class="message" style="display:none;"></div>
+        <div id="msg_step2" class="message"></div>
 
         <form id="form_step2">
             <input type="hidden" id="phoneNumber_step2">
@@ -165,30 +166,41 @@
         </form>
 
         <button class="link-button" onclick="showForgetPassword()">فراموشی رمز عبور</button>
-        <button class="dk-button dk-button-secondary" type="button" onclick="resetFlow()">بازگشت</button>
+        <button class="dk-button-secondary" type="button" onclick="resetFlow()">بازگشت</button>
     </div>
 
     <div id="registrationSection" class="dk-form-card" style="display:none;">
         <h2>تکمیل اطلاعات و ثبت‌نام</h2>
         <p style="text-align: center;">شماره <span id="display_regNumber"></span> ثبت نشده است.</p>
 
-        <div id="regMessage" class="message" style="display:none;"></div>
+        <div id="regMessage" class="message"></div>
 
         <form id="regForm">
+            <input type="hidden" id="regPhoneNumber" name="regPhoneNumber">
+
             <div class="dk-form-group">
                 <div class="dk-input-wrapper">
-                    <input type="text" id="regPhoneNumber" class="dk-input" readonly>
-                    <label for="regPhoneNumber" class="dk-label">شماره موبایل</label>
+                    <input type="text" id="fullName" class="dk-input" required>
+                    <label for="fullName" class="dk-label">نام و نام خانوادگی</label>
                 </div>
             </div>
 
-            <div class="dk-form-group"><div class="dk-input-wrapper"><input type="text" id="fullName" class="dk-input" required><label for="fullName" class="dk-label">نام و نام خانوادگی</label></div></div>
-            <div class="dk-form-group"><div class="dk-input-wrapper"><input type="email" id="regEmail" class="dk-input" required><label for="regEmail" class="dk-label">ایمیل</label></div></div>
-            <div class="dk-form-group"><div class="dk-input-wrapper"><input type="password" id="regPassword" class="dk-input" required><label for="regPassword" class="dk-label">رمز عبور</label></div></div>
-            <div class="dk-form-group"><div class="dk-input-wrapper"><input type="password" id="confirmPassword" class="dk-input" required><label for="confirmPassword" class="dk-label">تکرار رمز عبور</label></div></div>
+            <div class="dk-form-group">
+                <div class="dk-input-wrapper">
+                    <input type="password" id="regPassword" class="dk-input" required>
+                    <label for="regPassword" class="dk-label">رمز عبور</label>
+                </div>
+            </div>
 
-            <button class="dk-button" type="submit">ثبت نام نهایی و ورود</button>
-            <button class="dk-button dk-button-secondary" type="button" onclick="resetFlow()">بازگشت</button>
+            <div class="dk-form-group">
+                <div class="dk-input-wrapper">
+                    <input type="password" id="confirmPassword" class="dk-input" required>
+                    <label for="confirmPassword" class="dk-label">تکرار رمز عبور</label>
+                </div>
+            </div>
+
+            <button class="dk-button-primary" type="submit">ثبت نام نهایی و ورود</button>
+            <button class="dk-button-secondary" type="button" onclick="resetFlow()">بازگشت</button>
         </form>
     </div>
 
@@ -208,6 +220,10 @@
         const regForm = document.getElementById('regForm');
         const regMsgDiv = document.getElementById('regMessage');
         const displayRegNumber = document.getElementById('display_regNumber');
+        const regPhoneNumberInput = document.getElementById('regPhoneNumber'); // ورودی مخفی در فرم ثبت نام
+        const passwordStep2Input = document.getElementById('password_step2');
+        const phoneNumberStep2Input = document.getElementById('phoneNumber_step2');
+
 
         let currentPhoneNumber = '';
 
@@ -225,10 +241,19 @@
             step1Div.style.display = 'block';
             document.getElementById('phoneNumber_step1').value = '';
             currentPhoneNumber = '';
+            // پاک کردن فیلد رمز عبور مرحله دوم هنگام بازگشت
+            passwordStep2Input.value = '';
         }
 
         function showForgetPassword() {
             alert("فلو فراموشی رمز عبور در حال پیاده‌سازی است.");
+        }
+
+        // تابع نمایش پیام خطا/موفقیت (برای راحتی بیشتر)
+        function displayMessage(element, type, message) {
+            element.className = `message ${type}`;
+            element.textContent = message;
+            element.style.display = 'block';
         }
 
         // تابع اعتبارسنجی شماره موبایل
@@ -247,70 +272,72 @@
         formStep1.addEventListener('submit', async function (e) {
             e.preventDefault();
 
-            currentPhoneNumber = document.getElementById('phoneNumber_step1').value;
+            currentPhoneNumber = document.getElementById('phoneNumber_step1').value.trim();
             msgStep1.style.display = 'none';
 
             const validationError = validatePhoneNumber(currentPhoneNumber);
             if (validationError) {
-                msgStep1.className = 'message error';
-                msgStep1.textContent = validationError;
-                msgStep1.style.display = 'block';
+                displayMessage(msgStep1, 'error', validationError);
                 return;
             }
 
             // ارسال رمز خالی برای تشخیص وجود کاربر
             const loginModel = {
                 PhoneNumber: currentPhoneNumber,
-                Password: ''
+                Password: '' // رمز خالی برای مرحله اول
             };
 
             try {
+                // فراخوانی API لاگین
                 const response = await fetch('/api/Auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(loginModel)
                 });
 
-                // ما فقط نیاز به وضعیت پاسخ (status) داریم تا تشخیص دهیم کاربر وجود دارد یا نه
-                if (response.status === 400 || response.status === 401 || response.ok) {
-                    // کاربر وجود دارد (API پاسخ 400/401/200 داده) -> برو مرحله ۲
-                    hideAllSteps();
-                    displayPhoneNumber.textContent = currentPhoneNumber;
-                    document.getElementById('phoneNumber_step2').value = currentPhoneNumber;
-                    step2Div.style.display = 'block';
-                    document.getElementById('password_step2').focus();
+                // اگر پاسخ 200 OK باشد، نباید در این مرحله رخ دهد
+                if (response.ok) {
+                    displayMessage(msgStep1, 'error', 'خطای منطقی: لاگین کامل با رمز خالی موفق شد.');
+                    return;
+                }
 
-                } else if (response.status === 404) {
-                    // کاربر وجود ندارد (API پاسخ 404 داده) -> برو ثبت نام
+                // اگر خطا باشد (400, 404, 500)، داده‌ها را برای مدیریت می‌خوانیم
+                const data = await response.json();
+
+                if (response.status === 404) {
+                    // === کاربر جدید (404) -> برو ثبت نام ===
                     hideAllSteps();
                     displayRegNumber.textContent = currentPhoneNumber;
-                    document.getElementById('regPhoneNumber').value = currentPhoneNumber;
+                    regPhoneNumberInput.value = currentPhoneNumber; // ذخیره شماره در فرم ثبت نام
                     registrationDiv.style.display = 'block';
-
+                    document.getElementById('fullName').focus();
+                } else if (response.status === 400 || response.status === 401) {
+                    // === کاربر موجود (400) -> برو مرحله رمز عبور ===
+                    hideAllSteps();
+                    displayPhoneNumber.textContent = currentPhoneNumber;
+                    phoneNumberStep2Input.value = currentPhoneNumber; // ذخیره شماره در فرم مرحله 2
+                    step2Div.style.display = 'block';
+                    passwordStep2Input.focus();
                 } else {
                     // خطاهای ناشناخته دیگر
-                    const data = await response.json();
-                    msgStep1.className = 'message error';
-                    msgStep1.textContent = data.message || 'خطا در بررسی شماره موبایل.';
-                    msgStep1.style.display = 'block';
+                    displayMessage(msgStep1, 'error', data.message || `خطا: ${response.status} در بررسی شماره موبایل.`);
                 }
 
             } catch (error) {
-                msgStep1.className = 'message error';
-                msgStep1.textContent = 'خطای اتصال به سرور. مطمئن شوید که پروژه فعال است.';
-                msgStep1.style.display = 'block';
+                console.error("Fetch Error:", error);
+                displayMessage(msgStep1, 'error', 'خطای اتصال به سرور. مطمئن شوید که پروژه فعال است.');
             }
         });
 
 
         // ------------------------------------------
-        // ۲. منطق مرحله ۲: ارسال رمز عبور (Final Login) - بدون تغییر
+        // ۲. منطق مرحله ۲: ارسال رمز عبور (Final Login)
         // ------------------------------------------
         formStep2.addEventListener('submit', async function (e) {
             e.preventDefault();
-            // ... (منطق ورود نهایی) ...
-            const phoneNumber = document.getElementById('phoneNumber_step2').value;
-            const password = document.getElementById('password_step2').value;
+
+            const phoneNumber = phoneNumberStep2Input.value;
+            const password = passwordStep2Input.value;
             msgStep2.style.display = 'none';
 
             try {
@@ -323,45 +350,49 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    msgStep2.className = 'message success';
-                    msgStep2.textContent = data.message;
-                    msgStep2.style.display = 'block';
-                    setTimeout(() => { window.location.href = '/Home.html'; }, 1500);
+                    // ورود موفق
+                    displayMessage(msgStep2, 'success', data.message);
+                    setTimeout(() => { window.location.href = data.redirectUrl || '/Home.html'; }, 1500);
 
                 } else {
-                    msgStep2.className = 'message error';
-                    msgStep2.textContent = data.message || 'خطا در ورود';
-                    msgStep2.style.display = 'block';
+                    // اگر 401 یا 400 (رمز اشتباه) باشد
+                    displayMessage(msgStep2, 'error', data.message || 'خطا در ورود');
                 }
             } catch (error) {
-                msgStep2.className = 'message error';
-                msgStep2.textContent = 'خطای اتصال به سرور.';
-                msgStep2.style.display = 'block';
+                console.error("Login Error:", error);
+                displayMessage(msgStep2, 'error', 'خطای اتصال به سرور.');
             }
         });
 
 
         // ------------------------------------------
-        // ۳. منطق ثبت نام (Registration) - بدون تغییر
+        // ۳. منطق ثبت نام (Registration)
         // ------------------------------------------
         regForm.addEventListener('submit', async function (e) {
             e.preventDefault();
-            // ... (منطق ثبت نام) ...
+
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // اعتبارسنجی سمت کلاینت
+            if (password !== confirmPassword) {
+                displayMessage(regMsgDiv, 'error', 'رمز عبورها یکسان نیستند.');
+                return;
+            }
+            if (password.length < 6) { // اعتبارسنجی حداقل طول
+                displayMessage(regMsgDiv, 'error', 'رمز عبور باید حداقل ۶ کاراکتر باشد.');
+                return;
+            }
+
             const model = {
-                PhoneNumber: document.getElementById('regPhoneNumber').value,
-                FullName: document.getElementById('fullName').value,
-                Email: document.getElementById('regEmail').value,
-                Password: document.getElementById('regPassword').value,
-                ConfirmPassword: document.getElementById('confirmPassword').value
+                PhoneNumber: regPhoneNumberInput.value,
+                FullName: document.getElementById('fullName').value.trim(),
+                Password: password,
+                ConfirmPassword: confirmPassword
+                // Email حذف شده است
             };
             regMsgDiv.style.display = 'none';
 
-            if (model.Password !== model.ConfirmPassword) {
-                regMsgDiv.className = 'message error';
-                regMsgDiv.textContent = 'رمز عبورها یکسان نیستند.';
-                regMsgDiv.style.display = 'block';
-                return;
-            }
 
             try {
                 const response = await fetch('/api/Auth/register', {
@@ -373,19 +404,15 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    regMsgDiv.className = 'message success';
-                    regMsgDiv.textContent = data.message;
-                    regMsgDiv.style.display = 'block';
+                    displayMessage(regMsgDiv, 'success', data.message);
+                    // ورود خودکار پس از ثبت نام موفق
                     setTimeout(() => { window.location.href = '/Home.html'; }, 1500);
                 } else {
-                    regMsgDiv.className = 'message error';
-                    regMsgDiv.textContent = data.message || 'خطا در ثبت نام';
-                    regMsgDiv.style.display = 'block';
+                    displayMessage(regMsgDiv, 'error', data.message || 'خطا در ثبت نام');
                 }
             } catch (error) {
-                regMsgDiv.className = 'message error';
-                regMsgDiv.textContent = 'خطای اتصال به سرور در زمان ثبت نام.';
-                regMsgDiv.style.display = 'block';
+                console.error("Registration Fetch Error:", error);
+                displayMessage(regMsgDiv, 'error', 'خطای اتصال به سرور در زمان ثبت نام.');
             }
         });
     </script>
