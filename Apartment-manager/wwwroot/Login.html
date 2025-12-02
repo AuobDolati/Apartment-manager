@@ -8,7 +8,7 @@
 
     <style>
         body {
-            font-family: 'B Nazanin', Tahoma, sans-serif; /* فونت بهبود یافته */
+            font-family: 'B Nazanin', Tahoma, sans-serif;
             background-color: #f4f7f6;
             display: flex;
             justify-content: center;
@@ -40,7 +40,6 @@
             border: 1px solid #ccc;
             border-radius: 5px;
             box-sizing: border-box;
-            /* برای ورودی‌های فارسی، جهت به سمت راست است */
             direction: ltr;
             text-align: right;
         }
@@ -220,7 +219,7 @@
         const regForm = document.getElementById('regForm');
         const regMsgDiv = document.getElementById('regMessage');
         const displayRegNumber = document.getElementById('display_regNumber');
-        const regPhoneNumberInput = document.getElementById('regPhoneNumber'); // ورودی مخفی در فرم ثبت نام
+        const regPhoneNumberInput = document.getElementById('regPhoneNumber');
         const passwordStep2Input = document.getElementById('password_step2');
         const phoneNumberStep2Input = document.getElementById('phoneNumber_step2');
 
@@ -241,7 +240,6 @@
             step1Div.style.display = 'block';
             document.getElementById('phoneNumber_step1').value = '';
             currentPhoneNumber = '';
-            // پاک کردن فیلد رمز عبور مرحله دوم هنگام بازگشت
             passwordStep2Input.value = '';
         }
 
@@ -249,14 +247,12 @@
             alert("فلو فراموشی رمز عبور در حال پیاده‌سازی است.");
         }
 
-        // تابع نمایش پیام خطا/موفقیت (برای راحتی بیشتر)
         function displayMessage(element, type, message) {
             element.className = `message ${type}`;
             element.textContent = message;
             element.style.display = 'block';
         }
 
-        // تابع اعتبارسنجی شماره موبایل
         function validatePhoneNumber(number) {
             const iranianMobileRegex = /^09\d{9}$/;
             if (!iranianMobileRegex.test(number)) {
@@ -281,27 +277,30 @@
                 return;
             }
 
-            // ارسال رمز خالی برای تشخیص وجود کاربر
             const loginModel = {
                 PhoneNumber: currentPhoneNumber,
                 Password: '' // رمز خالی برای مرحله اول
             };
 
             try {
-                // فراخوانی API لاگین
                 const response = await fetch('/api/Auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(loginModel)
                 });
 
-                // اگر پاسخ 200 OK باشد، نباید در این مرحله رخ دهد
+                // در اینجا پاسخ را دریافت کرده‌ایم (حتی اگر 400 یا 500 باشد).
+
+                // اگر پاسخ 200 OK باشد، یعنی کاربر با رمز خالی لاگین کرده (خطای منطقی یا کاربر رمز ندارد).
                 if (response.ok) {
-                    displayMessage(msgStep1, 'error', 'خطای منطقی: لاگین کامل با رمز خالی موفق شد.');
+                    const data = await response.json();
+                    displayMessage(msgStep1, 'success', data.message || 'ورود موفق');
+                    // فرض بر این است که اگر در این مرحله 200 بگیرید، ورود نهایی انجام شده است.
+                    setTimeout(() => { window.location.href = data.redirectUrl || '/Home.html'; }, 500);
                     return;
                 }
 
-                // اگر خطا باشد (400, 404, 500)، داده‌ها را برای مدیریت می‌خوانیم
+                // خواندن بدنه پاسخ برای خطاهای 4xx و 5xx
                 const data = await response.json();
 
                 if (response.status === 404) {
@@ -313,17 +312,20 @@
                     document.getElementById('fullName').focus();
                 } else if (response.status === 400 || response.status === 401) {
                     // === کاربر موجود (400) -> برو مرحله رمز عبور ===
+                    // (400 از سرور می‌آید چون رمز خالی است)
                     hideAllSteps();
                     displayPhoneNumber.textContent = currentPhoneNumber;
                     phoneNumberStep2Input.value = currentPhoneNumber; // ذخیره شماره در فرم مرحله 2
                     step2Div.style.display = 'block';
                     passwordStep2Input.focus();
                 } else {
-                    // خطاهای ناشناخته دیگر
-                    displayMessage(msgStep1, 'error', data.message || `خطا: ${response.status} در بررسی شماره موبایل.`);
+                    // خطاهای ناشناخته دیگر (مثلاً 500)
+                    // پیام خطای دریافتی از سرور نمایش داده می‌شود
+                    displayMessage(msgStep1, 'error', data.message || `خطای سرور: ${response.status} در بررسی شماره موبایل.`);
                 }
 
             } catch (error) {
+                // === خطای اتصال شبکه واقعی (سرور فعال نیست) ===
                 console.error("Fetch Error:", error);
                 displayMessage(msgStep1, 'error', 'خطای اتصال به سرور. مطمئن شوید که پروژه فعال است.');
             }
@@ -351,16 +353,16 @@
 
                 if (response.ok) {
                     // ورود موفق
-                    displayMessage(msgStep2, 'success', data.message);
+                    displayMessage(msgStep2, 'success', data.message || 'ورود موفقیت آمیز');
                     setTimeout(() => { window.location.href = data.redirectUrl || '/Home.html'; }, 1500);
 
                 } else {
-                    // اگر 401 یا 400 (رمز اشتباه) باشد
-                    displayMessage(msgStep2, 'error', data.message || 'خطا در ورود');
+                    // اگر 401 یا 400 (رمز اشتباه) باشد یا 500
+                    displayMessage(msgStep2, 'error', data.message || 'خطا در ورود یا رمز عبور اشتباه است.');
                 }
             } catch (error) {
                 console.error("Login Error:", error);
-                displayMessage(msgStep2, 'error', 'خطای اتصال به سرور.');
+                displayMessage(msgStep2, 'error', 'خطای اتصال به سرور در زمان ورود.');
             }
         });
 
@@ -379,7 +381,7 @@
                 displayMessage(regMsgDiv, 'error', 'رمز عبورها یکسان نیستند.');
                 return;
             }
-            if (password.length < 6) { // اعتبارسنجی حداقل طول
+            if (password.length < 6) {
                 displayMessage(regMsgDiv, 'error', 'رمز عبور باید حداقل ۶ کاراکتر باشد.');
                 return;
             }
@@ -389,7 +391,6 @@
                 FullName: document.getElementById('fullName').value.trim(),
                 Password: password,
                 ConfirmPassword: confirmPassword
-                // Email حذف شده است
             };
             regMsgDiv.style.display = 'none';
 
@@ -404,11 +405,11 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    displayMessage(regMsgDiv, 'success', data.message);
+                    displayMessage(regMsgDiv, 'success', data.message || 'ثبت نام موفقیت آمیز');
                     // ورود خودکار پس از ثبت نام موفق
                     setTimeout(() => { window.location.href = '/Home.html'; }, 1500);
                 } else {
-                    displayMessage(regMsgDiv, 'error', data.message || 'خطا در ثبت نام');
+                    displayMessage(regMsgDiv, 'error', data.message || 'خطا در ثبت نام.');
                 }
             } catch (error) {
                 console.error("Registration Fetch Error:", error);

@@ -67,24 +67,30 @@ namespace ApartmentManager.Controllers
         }
 
 
+        // File: Controllers/AuthController.cs - متد Login
+
+        // File: Controllers/AuthController.cs - متد Login (اصلاح نهایی)
+
         [HttpPost("login")]
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginRequest model)
         {
-            // ۱. بررسی اعتبارسنجی مدل سمت سرور (ModelState) 
-            // اگر شماره موبایل اجباری (Required) نباشد، در اینجا 400 برمی‌گرداند.
             if (!ModelState.IsValid)
             {
                 var error = ModelState.Values.SelectMany(v => v.Errors).FirstOrDefault();
                 return BadRequest(new { message = error?.ErrorMessage ?? "اطلاعات وارد شده نامعتبر است." });
             }
 
-            // ۲. پیدا کردن کاربر بر اساس شماره موبایل
-            var user = await _userManager.Users.SingleOrDefaultAsync(u => u.PhoneNumber == model.PhoneNumber);
+            // === خط اصلاح‌شده: جایگزینی با FirstOrDefaultAsync ===
+            // این روش امن‌تر است و مشکل ترجمه کوئری را حل می‌کند
+            var user = await _userManager.Users
+                                         .FirstOrDefaultAsync(u => u.PhoneNumber == model.PhoneNumber);
+            // === پایان خط اصلاح شده ===
+
 
             if (user == null)
             {
-                // === حالت ۱: کاربر جدید (404) ===
+                // ... (بقیه منطق 404)
                 return NotFound(new
                 {
                     message = "کاربر با این شماره موبایل یافت نشد. لطفا ثبت نام کنید.",
@@ -92,16 +98,14 @@ namespace ApartmentManager.Controllers
                 });
             }
 
-            // ۳. اگر رمز عبور ارسال نشده باشد (فقط شماره موبایل برای بررسی وجود کاربر)
+            // ۳. اگر رمز عبور ارسال نشده باشد
             if (string.IsNullOrEmpty(model.Password))
             {
-                // === حالت ۲: کاربر موجود است، اما رمز عبور می‌خواهد (400) ===
+                // ... (بقیه منطق 400)
                 return BadRequest(new { message = "لطفاً رمز عبور را وارد کنید." });
             }
 
             // ۴. تلاش برای ورود با رمز عبور کامل
-
-            // UserName همان PhoneNumber است که در زمان ثبت نام تنظیم کردیم
             var userName = user.UserName;
 
             var result = await _signInManager.PasswordSignInAsync(
@@ -112,11 +116,9 @@ namespace ApartmentManager.Controllers
 
             if (result.Succeeded)
             {
-                // === حالت ۴: ورود موفق ===
                 return Ok(new { message = "ورود موفقیت آمیز.", redirectUrl = "/Home.html" });
             }
 
-            // === حالت ۵: رمز عبور اشتباه ===
             return Unauthorized(new { message = "رمز عبور یا اطلاعات وارد شده صحیح نیست." });
         }
     }
