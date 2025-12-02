@@ -186,14 +186,14 @@
 
             <div class="dk-form-group">
                 <div class="dk-input-wrapper">
-                    <input type="password" id="regPassword" class="dk-input" required>
+                    <input type="password" id="regPassword" class="dk-input" required minlength="3">
                     <label for="regPassword" class="dk-label">رمز عبور</label>
                 </div>
             </div>
 
             <div class="dk-form-group">
                 <div class="dk-input-wrapper">
-                    <input type="password" id="confirmPassword" class="dk-input" required>
+                    <input type="password" id="confirmPassword" class="dk-input" required minlength="3">
                     <label for="confirmPassword" class="dk-label">تکرار رمز عبور</label>
                 </div>
             </div>
@@ -307,7 +307,20 @@
                     // === کاربر جدید (404) -> برو ثبت نام ===
                     hideAllSteps();
                     displayRegNumber.textContent = currentPhoneNumber;
-                    regPhoneNumberInput.value = currentPhoneNumber; // ذخیره شماره در فرم ثبت نام
+                    regPhoneNumberInput.value = currentPhoneNumber; // ذخیره شماره در فیلد مخفی ثبت نام
+
+                    // 🛠️ اصلاح: پاکسازی اجباری فیلدهای رمز عبور برای جلوگیری از تداخل مقداردهی
+                    const regPasswordInput = document.getElementById('regPassword');
+                    const confirmPasswordInput = document.getElementById('confirmPassword');
+
+                    regPasswordInput.value = ''; // ⬅️ پاک کردن هر گونه مقدار پیش‌فرض
+                    confirmPasswordInput.value = '';
+                    regPasswordInput.readOnly = false;
+                    regPasswordInput.disabled = false;
+                    confirmPasswordInput.readOnly = false;
+                    confirmPasswordInput.disabled = false;
+                    // ----------------------------------------------------
+
                     registrationDiv.style.display = 'block';
                     document.getElementById('fullName').focus();
                 } else if (response.status === 400 || response.status === 401) {
@@ -381,8 +394,10 @@
                 displayMessage(regMsgDiv, 'error', 'رمز عبورها یکسان نیستند.');
                 return;
             }
+
+            // 🛠️ اصلاح: پیام خطا باید متناسب با minlength="3" باشد.
             if (password.length < 3) {
-                displayMessage(regMsgDiv, 'error', 'رمز عبور باید حداقل ۶ کاراکتر باشد.');
+                displayMessage(regMsgDiv, 'error', 'رمز عبور باید حداقل ۳ کاراکتر باشد.');
                 return;
             }
 

@@ -21,5 +21,8 @@ namespace ApartmentManager.Models
         [Required]
         [Compare("Password", ErrorMessage = "تکرار رمز عبور باید با رمز عبور اصلی یکسان باشد.")]
         public required string ConfirmPassword { get; set; }
+
+        
+        
     }
 }

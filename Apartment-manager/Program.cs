@@ -17,10 +17,14 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 // === اصلاح مهم: غیرفعال کردن اعتبارسنجی Email توسط Identity ===
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
-    // این خط، اجباری بودن Email را غیرفعال می‌کند
-    options.User.RequireUniqueEmail = false;
-    options.SignIn.RequireConfirmedEmail = false;
-    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+"; // مجاز بودن کاراکترهای معمول
+    options.Password.RequireDigit = false;        // نیاز به اعداد را غیرفعال می‌کند
+    options.Password.RequireLowercase = false;    // نیاز به حروف کوچک را غیرفعال می‌کند
+    options.Password.RequireNonAlphanumeric = false; // نیاز به کاراکترهای خاص را غیرفعال می‌کند
+    options.Password.RequireUppercase = false;    // نیاز به حروف بزرگ را غیرفعال می‌کند
+    // ⬅️ حداقل طول به 3 تغییر داده شد
+    options.Password.RequiredLength = 3;
+    options.Password.RequiredUniqueChars = 0;
+   // options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+"; // مجاز بودن کاراکترهای معمول
 })
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
