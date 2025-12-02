@@ -3,6 +3,7 @@ using ApartmentManager.Data;
 using ApartmentManager.Models; // مطمئن شوید که این using وجود دارد
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Apartment_manager.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 

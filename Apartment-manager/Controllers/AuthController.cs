@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq; // اضافه کردن این using برای First().Description در Register
 using System.Threading.Tasks;
+using Apartment_manager.Data;
 
 namespace ApartmentManager.Controllers
 {
