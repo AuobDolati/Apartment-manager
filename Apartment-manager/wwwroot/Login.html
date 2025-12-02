@@ -192,6 +192,9 @@
         </form>
     </div>
 
+    // ==============================================
+    // منطق جاوااسکریپت (اصلاح شده نهایی)
+    // ==============================================
     <script>
         // DOM Elements
         const step1Div = document.getElementById('step1_phoneNumber');
@@ -208,10 +211,8 @@
         const regMsgDiv = document.getElementById('regMessage');
         const displayRegNumber = document.getElementById('display_regNumber');
 
-        // متغیر موقت برای نگهداری شماره موبایل
         let currentPhoneNumber = '';
 
-        // تابع مخفی کردن همه فرم ها
         function hideAllSteps() {
             step1Div.style.display = 'none';
             step2Div.style.display = 'none';
@@ -220,34 +221,27 @@
             msgStep2.style.display = 'none';
             regMsgDiv.style.display = 'none';
         }
-        // تابع اعتبارسنجی شماره موبایل
-        function validatePhoneNumber(number) {
-            const iranianMobileRegex = /^09\d{9}$/;
-            if (!number) {
-                return "شماره موبایل نمی‌تواند خالی باشد.";
-            }
-            if (!iranianMobileRegex.test(number)) {
-                return "شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود.";
-            }
-            return null; // اگر معتبر بود، null برمی‌گرداند
-        }
 
-        // بازگشت به مرحله ۱
         function resetFlow() {
             hideAllSteps();
             step1Div.style.display = 'block';
-            document.getElementById('phoneNumber_step1').value = ''; // پاک کردن فیلد
+            document.getElementById('phoneNumber_step1').value = '';
             currentPhoneNumber = '';
         }
 
-        // تابعی برای فراموشی رمز (فقط اعلان)
         function showForgetPassword() {
             alert("فلو فراموشی رمز عبور در حال پیاده‌سازی است.");
-            // در آینده می توانید فرم فراموشی رمز را اینجا نمایش دهید
         }
 
+        // تابع اعتبارسنجی شماره موبایل
+        function validatePhoneNumber(number) {
+            const iranianMobileRegex = /^09\d{9}$/;
+            if (!iranianMobileRegex.test(number)) {
+                return "شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود.";
+            }
+            return null;
+        }
 
-        // Login.html - منطق مرحله ۱
 
         // ------------------------------------------
         // ۱. منطق مرحله ۱: ارسال شماره موبایل (Check Registration)
@@ -258,24 +252,19 @@
             currentPhoneNumber = document.getElementById('phoneNumber_step1').value;
             msgStep1.style.display = 'none';
 
-            // *** اعتبارسنجی جدید ***
             const validationError = validatePhoneNumber(currentPhoneNumber);
             if (validationError) {
                 msgStep1.className = 'message error';
                 msgStep1.textContent = validationError;
                 msgStep1.style.display = 'block';
-                return; // ارسال به سرور متوقف می شود
+                return;
             }
-            // ************************
 
-            // ... (ادامه کد fetch بدون تغییر) ...
-
+            // ارسال رمز خالی برای تشخیص وجود کاربر
             const loginModel = {
                 PhoneNumber: currentPhoneNumber,
                 Password: ''
             };
-
-            // ... (تلاش برای Fetch API) ...
 
             try {
                 const response = await fetch('/api/Auth/login', {
@@ -284,26 +273,25 @@
                     body: JSON.stringify(loginModel)
                 });
 
-                // ... (ادامه منطق مدیریت پاسخ ها - بدون تغییر) ...
-                const data = await response.json();
-
-                if (response.ok || response.status === 400 || response.status === 401) {
-                    // کاربر وجود دارد -> برو مرحله ۲
+                // ما فقط نیاز به وضعیت پاسخ (status) داریم تا تشخیص دهیم کاربر وجود دارد یا نه
+                if (response.status === 400 || response.status === 401 || response.ok) {
+                    // کاربر وجود دارد (API پاسخ 400/401/200 داده) -> برو مرحله ۲
                     hideAllSteps();
                     displayPhoneNumber.textContent = currentPhoneNumber;
                     document.getElementById('phoneNumber_step2').value = currentPhoneNumber;
                     step2Div.style.display = 'block';
                     document.getElementById('password_step2').focus();
 
-                } else if (response.status === 404 && data.needsRegistration === true) {
-                    // کاربر وجود ندارد -> برو ثبت نام
+                } else if (response.status === 404) {
+                    // کاربر وجود ندارد (API پاسخ 404 داده) -> برو ثبت نام
                     hideAllSteps();
                     displayRegNumber.textContent = currentPhoneNumber;
                     document.getElementById('regPhoneNumber').value = currentPhoneNumber;
                     registrationDiv.style.display = 'block';
 
                 } else {
-                    // خطاهای دیگر 
+                    // خطاهای ناشناخته دیگر
+                    const data = await response.json();
                     msgStep1.className = 'message error';
                     msgStep1.textContent = data.message || 'خطا در بررسی شماره موبایل.';
                     msgStep1.style.display = 'block';
@@ -318,11 +306,11 @@
 
 
         // ------------------------------------------
-        // ۲. منطق مرحله ۲: ارسال رمز عبور (Final Login)
+        // ۲. منطق مرحله ۲: ارسال رمز عبور (Final Login) - بدون تغییر
         // ------------------------------------------
         formStep2.addEventListener('submit', async function (e) {
             e.preventDefault();
-
+            // ... (منطق ورود نهایی) ...
             const phoneNumber = document.getElementById('phoneNumber_step2').value;
             const password = document.getElementById('password_step2').value;
             msgStep2.style.display = 'none';
@@ -337,14 +325,12 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // ورود موفقیت آمیز
                     msgStep2.className = 'message success';
                     msgStep2.textContent = data.message;
                     msgStep2.style.display = 'block';
                     setTimeout(() => { window.location.href = '/Home.html'; }, 1500);
 
                 } else {
-                    // رمز عبور اشتباه یا خطای دیگر
                     msgStep2.className = 'message error';
                     msgStep2.textContent = data.message || 'خطا در ورود';
                     msgStep2.style.display = 'block';
@@ -358,11 +344,11 @@
 
 
         // ------------------------------------------
-        // ۳. منطق ثبت نام (Registration)
+        // ۳. منطق ثبت نام (Registration) - بدون تغییر
         // ------------------------------------------
         regForm.addEventListener('submit', async function (e) {
             e.preventDefault();
-
+            // ... (منطق ثبت نام) ...
             const model = {
                 PhoneNumber: document.getElementById('regPhoneNumber').value,
                 FullName: document.getElementById('fullName').value,
@@ -389,11 +375,9 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // ثبت نام موفقیت آمیز
                     regMsgDiv.className = 'message success';
                     regMsgDiv.textContent = data.message;
                     regMsgDiv.style.display = 'block';
-                    // بلافاصله پس از ثبت نام، به صفحه اصلی منتقل کنید
                     setTimeout(() => { window.location.href = '/Home.html'; }, 1500);
                 } else {
                     regMsgDiv.className = 'message error';

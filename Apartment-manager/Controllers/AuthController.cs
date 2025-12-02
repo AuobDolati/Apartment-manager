@@ -1,87 +1,94 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
+﻿// Controllers/AuthController.cs
+
 using ApartmentManager.Models;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore; // برای جستجوی مستقیم در دیتابیس
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Linq; // اضافه کردن این using برای First().Description در Register
+using System.Threading.Tasks;
 
-[ApiController]
-[Route("api/[controller]")]
-public class AuthController : ControllerBase
+namespace ApartmentManager.Controllers
 {
-    private readonly SignInManager<IdentityUser> _signInManager;
-    private readonly UserManager<IdentityUser> _userManager;
-
-    public AuthController(SignInManager<IdentityUser> signInManager, UserManager<IdentityUser> userManager)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AuthController : ControllerBase
     {
-        _signInManager = signInManager;
-        _userManager = userManager;
-    }
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
 
-    [HttpPost("login")]
-    [AllowAnonymous]
-    public async Task<IActionResult> Login([FromBody] LoginRequest model)
-    {
-        if (!ModelState.IsValid)
+        public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
         {
-            return BadRequest(new { success = false, message = "شماره موبایل یا رمز عبور نامعتبر است." });
+            _userManager = userManager;
+            _signInManager = signInManager;
         }
 
-        // 1. جستجو بر اساس شماره موبایل
-        var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == model.PhoneNumber);
-
-        if (user == null)
+        [HttpPost("register")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Register([FromBody] RegisterRequest model)
         {
-            // 2. شماره موبایل یافت نشد -> کاربر جدید است و باید ثبت نام کند
-            return NotFound(new { success = false, message = "کاربر یافت نشد. لطفا ابتدا ثبت نام کنید.", needsRegistration = true });
+            if (ModelState.IsValid)
+            {
+                var user = new ApplicationUser
+                {
+                    UserName = model.Email,
+                    Email = model.Email,
+                    FullName = model.FullName,
+                    PhoneNumber = model.PhoneNumber
+                };
+
+                var result = await _userManager.CreateAsync(user, model.Password);
+
+                if (result.Succeeded)
+                {
+                    await _signInManager.SignInAsync(user, isPersistent: true);
+                    return Ok(new { message = "ثبت نام و ورود موفقیت آمیز." });
+                }
+
+                return BadRequest(new { message = result.Errors.First().Description });
+            }
+            return BadRequest(new { message = "اطلاعات وارد شده نامعتبر است." });
         }
 
-        // 3. کاربر پیدا شد -> تلاش برای ورود
-
-        // ASP.NET Identity به طور سنتی از UserName یا Email برای ورود استفاده می کند، 
-        // بنابراین از UserName کاربر برای فراخوانی PasswordSignInAsync استفاده می کنیم.
-        var result = await _signInManager.PasswordSignInAsync(
-           user.Email, // <--- از user.Email استفاده کنید
-           model.Password,
-           isPersistent: true,
-           lockoutOnFailure: false);
-
-        if (result.Succeeded)
+        [HttpPost("login")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Login([FromBody] LoginRequest model)
         {
-            return Ok(new { success = true, message = "ورود موفقیت‌آمیز" });
+            // ۱. پیدا کردن کاربر بر اساس شماره موبایل
+            var user = await _userManager.Users.SingleOrDefaultAsync(u => u.PhoneNumber == model.PhoneNumber);
+
+            if (user == null)
+            {
+                // ===> اگر کاربر وجود ندارد: پاسخ ۴۰۴ <===
+                return NotFound(new
+                {
+                    message = "کاربر با این شماره موبایل یافت نشد.",
+                    needsRegistration = true // پرچم برای JavaScript
+                });
+            }
+
+            // ۲. اگر رمز عبور ارسال نشده باشد (مرحله ۱ در Login.html)
+            if (string.IsNullOrEmpty(model.Password))
+            {
+                // ===> اگر کاربر وجود دارد اما رمز خواسته نشده: پاسخ ۴۰۰ (برو مرحله رمز) <===
+                return BadRequest(new { message = "لطفاً رمز عبور را وارد کنید." });
+            }
+
+            // ۳. تلاش برای ورود با رمز عبور کامل (مرحله ۲ در Login.html)
+            var result = await _signInManager.PasswordSignInAsync(
+                user.Email, // استفاده از ایمیل به عنوان UserName در Identity
+                model.Password,
+                isPersistent: true,
+                lockoutOnFailure: false);
+
+            if (result.Succeeded)
+            {
+                // ورود موفق
+                return Ok(new { message = "ورود موفقیت آمیز.", redirectUrl = "/Home.html" });
+            }
+
+            // ۴. رمز عبور اشتباه
+            return Unauthorized(new { message = "رمز عبور اشتباه است." });
         }
-
-        return Unauthorized(new { success = false, message = "رمز عبور اشتباه است." });
-    }
-    // داخل کلاس AuthController
-    [HttpPost("register")]
-    [AllowAnonymous]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest model)
-    {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(new { success = false, message = "لطفا تمام فیلدهای اجباری را تکمیل کنید." });
-        }
-
-        var user = new IdentityUser
-        {
-            UserName = model.Email, // Identity از Email به عنوان UserName استفاده می کند
-            Email = model.Email,
-            PhoneNumber = model.PhoneNumber,
-            EmailConfirmed = true // به فرض اینکه در WebView نیازی به تایید ایمیل نیست
-        };
-
-        var result = await _userManager.CreateAsync(user, model.Password);
-
-        if (result.Succeeded)
-        {
-            // ورود کاربر بلافاصله پس از ثبت نام
-            await _signInManager.SignInAsync(user, isPersistent: false);
-            return Ok(new { success = true, message = "ثبت نام و ورود موفقیت‌آمیز" });
-        }
-
-        // اگر ثبت نام ناموفق بود (مثلا ایمیل تکراری)
-        var errorMessages = string.Join(", ", result.Errors.Select(e => e.Description));
-        return BadRequest(new { success = false, message = errorMessages });
     }
 }
