@@ -10,6 +10,8 @@ namespace ApartmentManager.Models
         // فیلد سفارشی شما
         public required string FullName { get; set; }
 
+        public required string PhoneNumber { get; set; }
+
         // توجه: Email و UserName به صورت خودکار از IdentityUser ارث می‌رسند.
     }
 }
