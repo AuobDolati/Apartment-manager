@@ -7,6 +7,8 @@
     <title>نرم افزار مدیریت آپارتمان</title>
 
     <style>
+        /* ---------------------------------------------------- */
+        /* فونت و طرح‌بندی کلی */
         body {
             font-family: 'B Nazanin', Tahoma, sans-serif;
             background-color: #f4f7f6;
@@ -33,7 +35,11 @@
             color: #333;
         }
 
-        input[type="text"], input[type="password"] {
+        /* ---------------------------------------------------- */
+        /* فیلدهای ورودی - تغییرات اصلی برای کیبورد عددی اعمال شد */
+        input[type="text"],
+        input[type="password"],
+        input[type="tel"] { /* شامل type="tel" برای شماره موبایل */
             width: 100%;
             padding: 12px;
             margin: 10px 0;
@@ -42,8 +48,12 @@
             box-sizing: border-box;
             direction: ltr;
             text-align: right;
+            /* اطمینان از خوانایی روی دستگاه های مختلف */
+            font-size: 16px;
         }
 
+        /* ---------------------------------------------------- */
+        /* دکمه‌ها */
         button, .dk-button-primary {
             width: 100%;
             background-color: #4CAF50;
@@ -61,6 +71,29 @@
                 background-color: #45a049;
             }
 
+        .dk-button-secondary {
+            background-color: #f0f0f0;
+            color: #333;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+
+            .dk-button-secondary:hover {
+                background-color: #e0e0e0;
+            }
+
+        .link-button {
+            background: none;
+            color: #4CAF50;
+            border: none;
+            padding: 5px 0;
+            cursor: pointer;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        /* ---------------------------------------------------- */
+        /* پیام‌ها و اعلانات */
         .message {
             padding: 10px;
             margin-top: 15px;
@@ -79,21 +112,11 @@
             background-color: #e6ffe6;
             color: #00cc00;
             border: 1px solid #00cc00;
-            /* 💡 NEW: برای نمایش سریع‌تر پیام موفقیت */
             transition: background-color 0.5s ease;
         }
 
-        .dk-button-secondary {
-            background-color: #f0f0f0;
-            color: #333;
-            border: 1px solid #ccc;
-            margin-top: 10px;
-        }
-
-            .dk-button-secondary:hover {
-                background-color: #e0e0e0;
-            }
-
+        /* ---------------------------------------------------- */
+        /* استایل لیبل شناور */
         .dk-form-group {
             position: relative;
             margin-bottom: 25px;
@@ -113,16 +136,6 @@
             padding: 0 5px;
             transition: all 0.2s ease;
         }
-
-        .link-button {
-            background: none;
-            color: #4CAF50;
-            border: none;
-            padding: 5px 0;
-            cursor: pointer;
-            text-align: center;
-            font-size: 14px;
-        }
     </style>
 
 </head>
@@ -138,7 +151,13 @@
         <form id="form_step1">
             <div class="dk-form-group">
                 <div class="dk-input-wrapper">
-                    <input type="text" id="phoneNumber_step1" class="dk-input" required>
+                    <input type="tel"
+                           id="phoneNumber_step1"
+                           class="dk-input"
+                           required
+                           inputmode="numeric"
+                           pattern="[0-9]*"
+                           maxlength="11">
                     <label for="phoneNumber_step1" class="dk-label">شماره موبایل</label>
                 </div>
             </div>
@@ -228,9 +247,9 @@
 
         let currentPhoneNumber = '';
 
-        // 💡 NEW: بررسی اولیه توکن برای جلوگیری از نمایش فرم لاگین در صورت احراز هویت قبلی
+        // بررسی اولیه توکن
         function checkAuthentication() {
-            const token = localStorage.getItem('jwtToken'); // ⬅️ اصلاح املایی: L کوچک
+            const token = localStorage.getItem('jwtToken');
             if (token) {
                 // اگر توکن قبلاً وجود داشت، مستقیماً به صفحه اصلی هدایت کن
                 window.location.href = '/Home.html';
@@ -240,8 +259,7 @@
             }
         }
 
-        // 💡 NEW: فراخوانی بررسی احراز هویت در شروع
-        // checkAuthentication();
+        // checkAuthentication(); // اگر می خواهید هنگام لود شدن صفحه احراز هویت چک شود، کامنت را بردارید
 
 
         function hideAllSteps() {
@@ -272,6 +290,8 @@
         }
 
         function validatePhoneNumber(number) {
+            // اطمینان از حذف فاصله و کاراکترهای اضافی
+            number = number.replace(/[\s-]/g, '');
             const iranianMobileRegex = /^09\d{9}$/;
             if (!iranianMobileRegex.test(number)) {
                 return "شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود.";
@@ -295,28 +315,31 @@
                 return;
             }
 
+            // آدرس API شما در محیط توسعه محلی
+            const apiEndpoint = '/api/Auth/login';
+
             const loginModel = {
                 PhoneNumber: currentPhoneNumber,
-                Password: '' // رمز خالی برای مرحله اول
+                Password: ''
             };
 
             try {
-                const response = await fetch('/api/Auth/login', {
+                const response = await fetch(apiEndpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(loginModel)
                 });
 
-                const data = await response.json();
+                // اگر پاسخ 204 No Content یا 404 باشد، data ممکن است خالی باشد
+                const data = response.status !== 204 ? await response.json() : {};
 
-                // اگر پاسخ 200 OK باشد: ورود نهایی انجام شده است (در صورتیکه سرور در فلو مرحله اول توکن بدهد)
                 if (response.ok) {
-                    // 💡 NEW: ذخیره توکن اگر سرور آن را در مرحله 1 بفرستد
+                    // ورود نهایی انجام شده است (اگر سرور در مرحله اول توکن بدهد)
                     if (data.token) {
-                        localStorage.setItem('jwtToken', data.token); // ⬅️ اصلاح املایی: L کوچک
+                        localStorage.setItem('jwtToken', data.token);
                     }
                     displayMessage(msgStep1, 'success', data.message || 'ورود موفق');
-                    setTimeout(() => { window.location.href = data.redirectUrl || '/Home.html'; }, 1000); // 1000ms تأخیر
+                    setTimeout(() => { window.location.href = data.redirectUrl || '/Home.html'; }, 1000);
                     return;
                 }
 
@@ -326,16 +349,15 @@
                     displayRegNumber.textContent = currentPhoneNumber;
                     regPhoneNumberInput.value = currentPhoneNumber;
 
-                    const regPasswordInput = document.getElementById('regPassword');
-                    const confirmPasswordInput = document.getElementById('confirmPassword');
-
-                    regPasswordInput.value = '';
-                    confirmPasswordInput.value = '';
+                    // پاکسازی فیلدهای ثبت نام
+                    document.getElementById('regPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+                    document.getElementById('fullName').value = '';
 
                     registrationDiv.style.display = 'block';
                     document.getElementById('fullName').focus();
                 } else if (response.status === 400 || response.status === 401) {
-                    // === کاربر موجود (400) -> برو مرحله رمز عبور ===
+                    // === کاربر موجود (400/401) -> برو مرحله رمز عبور ===
                     hideAllSteps();
                     displayPhoneNumber.textContent = currentPhoneNumber;
                     phoneNumberStep2Input.value = currentPhoneNumber;
@@ -364,8 +386,11 @@
             const password = passwordStep2Input.value;
             msgStep2.style.display = 'none';
 
+            // آدرس API شما در محیط توسعه محلی
+            const apiEndpoint = '/api/Auth/login';
+
             try {
-                const response = await fetch('/api/Auth/login', {
+                const response = await fetch(apiEndpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ PhoneNumber: phoneNumber, Password: password })
@@ -374,14 +399,13 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // 💡 NEW: ذخیره توکن برای ورود موفق
+                    // ذخیره توکن برای ورود موفق
                     if (data.token) {
-                        localStorage.setItem('jwtToken', data.token); // ⬅️ اصلاح املایی: L کوچک
+                        localStorage.setItem('jwtToken', data.token);
                     }
 
                     // ورود موفق
                     displayMessage(msgStep2, 'success', data.message || 'ورود موفقیت آمیز');
-                    // تأخیر بیشتر برای اطمینان از ذخیره شدن توکن و نمایش پیام
                     setTimeout(() => { window.location.href = data.redirectUrl || '/Home.html'; }, 1000);
 
                 } else {
@@ -415,6 +439,9 @@
                 return;
             }
 
+            // آدرس API شما در محیط توسعه محلی
+            const apiEndpoint = '/api/Auth/register';
+
             const model = {
                 PhoneNumber: regPhoneNumberInput.value,
                 FullName: document.getElementById('fullName').value.trim(),
@@ -425,7 +452,7 @@
 
 
             try {
-                const response = await fetch('/api/Auth/register', {
+                const response = await fetch(apiEndpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(model)
@@ -434,9 +461,9 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // 💡 NEW: ذخیره توکن برای ورود خودکار پس از ثبت نام موفق
+                    // ذخیره توکن برای ورود خودکار پس از ثبت نام موفق
                     if (data.token) {
-                        localStorage.setItem('jwtToken', data.token); // ⬅️ اصلاح املایی: L کوچک
+                        localStorage.setItem('jwtToken', data.token);
                     }
 
                     displayMessage(regMsgDiv, 'success', data.message || 'ثبت نام موفقیت آمیز');
@@ -450,10 +477,6 @@
                 displayMessage(regMsgDiv, 'error', 'خطای اتصال به سرور در زمان ثبت نام.');
             }
         });
-
-        // 💡 NEW: اطمینان از نمایش ندادن فلو لاگین اگر توکن موجود است.
-        // اگر چه این تابع در ابتدای فایل به صورت کامنت است، ولی ایده خوبی است که چک شود.
-        // در حال حاضر چون در حالت دیباگ بودید، نیازی به فراخوانی این تابع در این فایل نیست.
 
     </script>
 
