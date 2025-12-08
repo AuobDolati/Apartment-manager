@@ -1,11 +1,11 @@
 ﻿// Controllers/AuthController.cs
-// توجه: فضای نام (Namespace) در خط زیر به MyWebApp.Data تغییر یافت تا با فایل‌های مدل جدید سازگار باشد.
+
+
 using ApartmentManager.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using MyWebApp.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;

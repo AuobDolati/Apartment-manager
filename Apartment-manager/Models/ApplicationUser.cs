@@ -2,6 +2,7 @@
 
 using Microsoft.AspNetCore.Identity;
 
+
 namespace ApartmentManager.Models
 {
     // ApplicationUser از IdentityUser ارث می‌برد
