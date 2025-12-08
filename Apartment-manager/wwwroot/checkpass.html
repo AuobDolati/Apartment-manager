@@ -1,0 +1,125 @@
+﻿<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ورود با رمز عبور</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #f0f4f8;
+        }
+
+        .form-card {
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+            .form-card.hidden {
+                display: none;
+            }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md">
+
+        <!-- Header مشترک -->
+        <div class="text-center mb-6">
+            <svg class="w-12 h-12 text-blue-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-3m0 0a2 2 0 012-2h2a2 2 0 012 2v3"></path></svg>
+            <h1 class="text-2xl font-bold text-gray-800">ورود به سامانه</h1>
+        </div>
+
+        <!-- فاز 3: ورود با رمز عبور -->
+        <div id="phase3" class="form-card bg-white p-6 md:p-8 rounded-xl w-full">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4 text-center">ورود با رمز عبور</h2>
+            <p id="login-mobile-display" class="text-center text-md font-bold text-blue-600 mb-4"></p>
+
+            <form id="login-form">
+                <div class="mb-6">
+                    <label for="password-login" class="block text-sm font-medium text-gray-600 mb-2">رمز ورود</label>
+                    <input type="password" id="password-login" class="w-full p-3 border border-gray-300 rounded-lg" required>
+                </div>
+
+                <button type="submit" id="login-submit-button" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition duration-150">تایید و ورود</button>
+
+                <!-- فراموشی رمز عبور -->
+                <button type="button" onclick="forgotPassword()" class="w-full mt-3 text-red-500 p-2 rounded-lg hover:bg-red-50 hover:underline transition duration-150 text-sm">فراموشی رمز عبور؟</button>
+            </form>
+
+            <button onclick="window.location.href = 'login.html'" class="w-full mt-4 text-gray-500 p-2 rounded-lg hover:bg-gray-100 transition duration-150">بازگشت و تغییر شماره</button>
+        </div>
+
+        <!-- جعبه پیام‌های سیستمی -->
+        <div id="message-box" class="mt-4 p-3 rounded-lg text-sm hidden" role="alert"></div>
+
+        <!-- نشانگر بارگذاری -->
+        <div id="loading-indicator" class="form-card bg-white p-6 md:p-8 rounded-xl w-full text-center hidden">
+            <div class="flex justify-center items-center">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-gray-600">در حال ورود به سیستم...</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ایمپورت فایل‌های جاوااسکریپت -->
+    <script type="module">
+        // مسیرها به پوشه /js/ به‌روزرسانی شدند
+        import { attemptLogin } from '/js/api.js';
+        import { getMobile, showMessage, setLoading, clearMobile } from '/js/utils.js';
+
+        const loginForm = document.getElementById('login-form');
+        const loginSubmitButton = document.getElementById('login-submit-button');
+        const loginMobileDisplay = document.getElementById('login-mobile-display');
+
+        const mobile = getMobile();
+        if (!mobile) {
+            // اگر شماره موبایل وجود نداشت، کاربر را به صفحه اول برگردان
+            window.location.href = 'login.html';
+        } else {
+            loginMobileDisplay.textContent = mobile;
+        }
+
+        // --- هندلر فاز 3: ورود با رمز عبور (لاگین) ---
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const passwordLogin = document.getElementById('password-login').value;
+
+            loginSubmitButton.disabled = true;
+            setLoading(true);
+
+            try {
+                // 💡 فراخوانی تابع ورود با رمز عبور از api.js
+                const result = await attemptLogin(mobile, passwordLogin);
+
+                if (result && result.success) {
+                   showMessage('ورود با موفقیت انجام شد! خوش آمدید.', 'success');
+                   // clearMobile();
+                   // window.location.href = '/dashboard.html';
+                }
+
+            } catch (error) {
+                console.error("Login Error:", error);
+                showMessage(error.message || 'خطا در برقراری ارتباط یا ورود ناموفق.', 'error');
+            } finally {
+                loginSubmitButton.disabled = false;
+                setLoading(false);
+            }
+        });
+
+        function forgotPassword() {
+            // 💡 در اینجا باید API فراموشی رمز و هدایت به یک صفحه دیگر برای ورود رمز جدید قرار گیرد
+            showMessage('درخواست فراموشی رمز عبور ارسال شد. (API فراموشی رمز اینجا قرار می گیرد)', 'success');
+        }
+
+        window.forgotPassword = forgotPassword;
+
+    </script>
+</body>
+</html>
