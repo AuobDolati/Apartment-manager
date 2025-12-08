@@ -1,64 +1,67 @@
 ﻿// ==========================================================
-//         🚨🚨🚨 مهم: تنظیمات API - حتماً ویرایش شود 🚨🚨🚨
+// 🚨🚨🚨 مهم: تنظیمات API - آدرس کامل و دقیق (Absolute URL) 🚨🚨🚨
 // ==========================================================
-// **لطفاً آدرس‌های زیر را با آدرس کامل (شامل پروتکل http/https و پورت) سرور ASP.NET Core خود جایگزین کنید.**
-// مثال: "https://localhost:7000/api/Account/CheckRegistration"
-export const CHECK_REGISTRATION_API_URL = "/api/Account/CheckRegistration";
-export const LOGIN_API_URL = "/api/Account/Login";
+// ** آدرس‌ها با پورت 44382 و کنترلر جدید Auth به‌روزرسانی شدند. **
+export const API_BASE_URL = "https://localhost:44382/api/Auth";
+
+// 💡 هر دو عملیات چک کردن و ورود نهایی از متد /api/Auth/login استفاده می‌کنند.
+export const CHECK_REGISTRATION_API_URL = `${API_BASE_URL}/login`;
+export const LOGIN_API_URL = `${API_BASE_URL}/login`;
+export const REGISTER_API_URL = `${API_BASE_URL}/register`;
 // ==========================================================
 //     پایان تنظیمات API - بقیه کد نیازی به تغییر ندارد
 // ==========================================================
 
 
 /**
- * تابع فراخوانی API برای بررسی وضعیت ثبت نام (با منطق شبیه سازی در صورت شکست)
+ * تابع فراخوانی API برای بررسی وضعیت ثبت نام (استفاده از متد Login در سرور)
+ * در سرور شما: اگر کاربر پیدا نشود، متد Login کد 404 (NotFound) برمی‌گرداند.
  * @param {string} mobile - شماره موبایل
  * @returns {Promise<{isRegistered: boolean}>}
  */
 export async function checkUserRegistrationStatus(mobile) {
 
-    const isPlaceholder = CHECK_REGISTRATION_API_URL.startsWith("/") || CHECK_REGISTRATION_API_URL.includes("CheckRegistration");
+    // در این مرحله فقط شماره موبایل را می‌فرستیم و رمز عبور را خالی می‌گذاریم.
+    const payload = { PhoneNumber: mobile, Password: "" };
 
     try {
-        if (isPlaceholder && !window.location.host.includes('localhost')) {
-            throw new Error("❌ آدرس API در کد جاوااسکریپت تنظیم نشده است. لطفا آدرس کامل سرور را جایگزین کنید.");
-        }
-
         const response = await fetch(CHECK_REGISTRATION_API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ MobileNumber: mobile })
+            body: JSON.stringify(payload)
         });
 
-        if (!response.ok) {
-            let errorMessage = `خطا در سرور (کد: ${response.status}).`;
-            try {
-                const errorData = await response.json();
-                errorMessage = errorData.message || errorData.title || errorMessage;
-            } catch { }
-            throw new Error(errorMessage);
+        // 🚨 وضعیت مورد انتظار از کنترلر C# برای کاربر ثبت نام نشده: 404 (NotFound)
+        if (response.status === 404) {
+            // ❌ کاربر ثبت نام نکرده است (AuthController شما 404 برمی‌گرداند)
+            return { isRegistered: false };
         }
 
-        const data = await response.json();
-
-        if (typeof data.isRegistered !== 'boolean') {
-            throw new Error("ساختار پاسخ API نادرست است: فیلد 'isRegistered' یافت نشد.");
+        // 🚨 وضعیت مورد انتظار برای کاربر ثبت نام کرده: 400 (BadRequest) یا 200 (OK)
+        // اگر کاربر پیدا شود اما رمز عبور خالی باشد، C# شما 400 برمی‌گرداند (نیاز به رمز).
+        if (response.status === 400 || response.ok) {
+            // ✅ کاربر ثبت نام کرده است
+            return { isRegistered: true };
         }
-        return data;
+
+
+        // اگر کد خطای دیگری غیر از 404 یا 400 رخ داد:
+        let errorMessage = `خطا در سرور (کد: ${response.status}).`;
+        try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorData.title || errorMessage;
+        } catch { }
+        throw new Error(errorMessage);
 
     } catch (error) {
         console.error("API Call Error:", error);
 
-        // --- منطق شبیه سازی اضطراری ---
-        if (isPlaceholder || error.message.includes('❌ آدرس API') || error.message.includes('Failed to fetch') || error.message.includes('خطا در برقراری ارتباط')) {
-            // از utils.js برای نمایش پیام استفاده می‌شود.
-            // showMessage("⚠️ هشدار: اتصال به API برقرار نشد. از منطق شبیه‌سازی برای تست استفاده می‌شود. (091X = ثبت شده | 093X = جدید)", 'warning');
-
+        // --- منطق شبیه سازی اضطراری (در صورت قطع شدن ارتباط) ---
+        if (error.message.includes('Failed to fetch') || error.message.includes('خطا در برقراری ارتباط')) {
             await new Promise(resolve => setTimeout(resolve, 800));
-
             // شبیه سازی بر اساس پیش شماره
             const isRegistered = mobile.startsWith('091');
-            return { isRegistered: isRegistered };
+            return { isRegistered: isRegistered }; // 091x = ثبت شده | 093x = جدید
         }
         // --- پایان منطق شبیه سازی ---
 
@@ -72,18 +75,19 @@ export async function checkUserRegistrationStatus(mobile) {
  */
 export async function attemptLogin(mobile, password) {
 
-    const isPlaceholder = LOGIN_API_URL.startsWith("/") || LOGIN_API_URL.includes("Login");
+    const payload = { PhoneNumber: mobile, Password: password };
 
     try {
         const response = await fetch(LOGIN_API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ MobileNumber: mobile, Password: password })
+            body: JSON.stringify(payload)
         });
 
         if (!response.ok) {
             let errorMessage = "نام کاربری یا رمز عبور اشتباه است.";
-            if (response.status !== 400 && response.status !== 401) {
+            // 401 برای رمز اشتباه و 404 برای کاربر جدید (که در چک ثبت نام مدیریت شد)
+            if (response.status !== 401 && response.status !== 404) {
                 errorMessage = `خطای سرور (کد: ${response.status}).`;
             }
             try {
@@ -94,23 +98,45 @@ export async function attemptLogin(mobile, password) {
         }
 
         const data = await response.json();
-        return data;
+        return data; // شامل token و redirectUrl
 
     } catch (error) {
         console.error("Login API Call Error:", error);
-
-        // --- منطق شبیه سازی اضطراری ورود ---
-        if (isPlaceholder || error.message.includes('Failed to fetch') || error.message.includes('خطا در برقراری ارتباط')) {
-            await new Promise(resolve => setTimeout(resolve, 800));
-            if (password === '123') {
-                // showMessage('ورود با موفقیت انجام شد! (حالت شبیه سازی)', 'success');
-                return { success: true, token: 'fake-token' };
-            } else {
-                throw new Error('رمز عبور وارد شده اشتباه است. (حالت شبیه سازی)');
-            }
-        }
-        // --- پایان منطق شبیه سازی ---
-
         throw new Error(error.message || 'خطا در برقراری ارتباط با سرور هنگام ورود.');
+    }
+}
+
+/**
+ * تابع ثبت نام نهایی
+ */
+export async function submitRegistration(fullName, phoneNumber, password) {
+    const payload = { FullName: fullName, PhoneNumber: phoneNumber, Password: password };
+
+    try {
+        const response = await fetch(REGISTER_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            let errorMessage = "خطا در ثبت نام. لطفا اطلاعات را بررسی کنید.";
+            try {
+                const errorData = await response.json();
+                if (errorData.errors && Array.isArray(errorData.errors)) {
+                    errorMessage += ": " + errorData.errors.join(", ");
+                } else {
+                    errorMessage = errorData.message || errorMessage;
+                }
+            } catch { }
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        return data; // شامل token و redirectUrl
+
+    } catch (error) {
+        console.error("Registration API Call Error:", error);
+        throw new Error(error.message || 'خطا در برقراری ارتباط با سرور هنگام ثبت نام.');
     }
 }
